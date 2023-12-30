@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outcome Organization</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Outcome Organization</h1>
+
+    <form action="{{ url_for('add_outcome') }}" method="post">
+        <label for="description">Description:</label>
+        <input type="text" name="description" required>
+
+        <label for="amount">Amount:</label>
+        <input type="number" name="amount" required>
+
+        <label for="date">Date:</label>
+        <input type="date" name="date" required>
+
+        <button type="submit">Add Outcome</button>
+    </form>
+
+    <input type="text" id="filterInput" onkeyup="filterTable()" placeholder="Filter by description">
+
+    <table id="outcomeTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Description</th>
+                <th onclick="sortTable(1)">Amount</th>
+                <th onclick="sortTable(2)">Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for outcome in outcomes %}
+            <tr>
+                <td>{{ outcome.description }}</td>
+                <td>{{ outcome.amount }}</td>
+                <td>{{ outcome.date.strftime('%Y-%m-%d') }}</td>
+                <td><a href="{{ url_for('delete_outcome', id=outcome.id) }}">Delete</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("outcomeTable");
+            switching = true;
+            dir = "asc";
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir === "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir === "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount === 0 && dir === "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        function filterTable() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("filterInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("outcomeTable");
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

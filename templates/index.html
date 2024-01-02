@@ -3,105 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outcome Organization</title>
+    <title>Pharmacy System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Outcome Organization</h1>
+    <h1>Pharmacy System</h1>
 
-    <form action="{{ url_for('add_outcome') }}" method="post">
-        <label for="description">Description:</label>
-        <input type="text" name="description" required>
+    <div>
+        <h2>Add Medicine</h2>
+        <form action="{{ url_for('add_medicine_form') }}" method="post">
+            <label for="name">Name:</label>
+            <input type="text" name="name" required>
 
-        <label for="amount">Amount:</label>
-        <input type="number" name="amount" required>
+            <label for="type">Type:</label>
+            <input type="text" name="type" required>
 
-        <label for="date">Date:</label>
-        <input type="date" name="date" required>
+            <label for="piece">Piece:</label>
+            <input type="number" name="piece" required>
 
-        <button type="submit">Add Outcome</button>
-    </form>
+            <label for="price">Price:</label>
+            <input type="number" name="price" step="0.01" required>
 
-    <input type="text" id="filterInput" onkeyup="filterTable()" placeholder="Filter by description">
+            <label for="date">Date:</label>
+            <input type="date" name="date" required>
 
-    <table id="outcomeTable">
+            <button type="submit">Add Medicine</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Sell Medicine</h2>
+        <form action="{{ url_for('sell_medicine_form') }}" method="post">
+            <label for="name">Name:</label>
+            <select name="name" required>
+                {% for medicine in add_medicines %}
+                    <option value="{{ medicine.name }}">{{ medicine.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="piece">Piece:</label>
+            <input type="number" name="piece" required>
+
+            <label for="price">Price:</label>
+            <input type="number" name="price" step="0.01" required>
+
+            <label for="date">Date:</label>
+            <input type="date" name="date" required>
+
+            <button type="submit">Sell Medicine</button>
+        </form>
+    </div>
+
+    <h2>Add Medicine Table</h2>
+    <table>
         <thead>
             <tr>
-                <th onclick="sortTable(0)">Description</th>
-                <th onclick="sortTable(1)">Amount</th>
-                <th onclick="sortTable(2)">Date</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Piece</th>
+                <th>Price</th>
+                <th>Date</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            {% for outcome in outcomes %}
+            {% for medicine in add_medicines %}
             <tr>
-                <td>{{ outcome.description }}</td>
-                <td>{{ outcome.amount }}</td>
-                <td>{{ outcome.date.strftime('%Y-%m-%d') }}</td>
-                <td><a href="{{ url_for('delete_outcome', id=outcome.id) }}">Delete</a></td>
+                <td>{{ medicine.name }}</td>
+                <td>{{ medicine.type }}</td>
+                <td>{{ medicine.piece }}</td>
+                <td>{{ medicine.price }}</td>
+                <td>{{ medicine.date.strftime('%Y-%m-%d') }}</td>
+                <td><a href="{{ url_for('delete_add_medicine', table='add', id=medicine.id) }}">Delete</a></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <script>
-        function sortTable(n) {
-            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            table = document.getElementById("outcomeTable");
-            switching = true;
-            dir = "asc";
-            while (switching) {
-                switching = false;
-                rows = table.rows;
-                for (i = 1; i < (rows.length - 1); i++) {
-                    shouldSwitch = false;
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-                    if (dir === "asc") {
-                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    } else if (dir === "desc") {
-                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    }
-                }
-                if (shouldSwitch) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    switchcount++;
-                } else {
-                    if (switchcount === 0 && dir === "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
-        }
+    <h2>Sell Medicine Table</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Piece</th>
+                <th>Sell Price</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for medicine in sell_medicines %}
+            <tr>
+                <td>{{ medicine.name }}</td>
+                <td>{{ medicine.name }}</td>
+                <td>{{ medicine.piece }}</td>
+                <td>{{ medicine.price }}</td>
+                <td>{{ medicine.date.strftime('%Y-%m-%d') }}</td>
+                <td><a href="{{ url_for('delete_sell_medicine', table='sell', id=medicine.id) }}">Delete</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        function filterTable() {
-            var input, filter, table, tr, td, i, txtValue;
-            input = document.getElementById("filterInput");
-            filter = input.value.toUpperCase();
-            table = document.getElementById("outcomeTable");
-            tr = table.getElementsByTagName("tr");
-            for (i = 0; i < tr.length; i++) {
-                td = tr[i].getElementsByTagName("td")[0];
-                if (td) {
-                    txtValue = td.textContent || td.innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
-                    }
-                }
-            }
-        }
-    </script>
+    <h2>Total Balance</h2>
+    <p>{{ total_balance }}</p>
 
 </body>
 </html>

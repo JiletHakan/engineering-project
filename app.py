@@ -3,56 +3,93 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///outcomes.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pharmacy.db'
 db = SQLAlchemy(app)
 
-# Outcome Model
-class Outcome(db.Model):
+class AddMedicine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(255), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    name = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(100), nullable=False)
+    piece = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables in the database
-with app.app_context():
-    db.create_all()
+class SellMedicine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    piece = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Routes
 @app.route('/')
 def index():
-    # Get the sort and filter parameters from the query string
-    sort_by = request.args.get('sort_by', 'id')  # Default to sorting by ID
-    filter_by = request.args.get('filter_by', '')
+    add_medicines = AddMedicine.query.all()
+    sell_medicines = SellMedicine.query.all()
 
-    # Fetch outcomes from the database based on sort and filter parameters
-    outcomes = Outcome.query.filter(Outcome.description.ilike(f"%{filter_by}%")).order_by(sort_by)
-    
-    return render_template('index.html', outcomes=outcomes, sort_by=sort_by, filter_by=filter_by)
+    # Calculate total prices
+    total_add_medicine_price = sum(medicine.price for medicine in add_medicines)
+    total_sell_medicine_price = sum(medicine.price for medicine in sell_medicines)
 
-@app.route('/add', methods=['POST'])
-def add_outcome():
+    total_balance = total_sell_medicine_price - total_add_medicine_price
+
+    return render_template('index.html', add_medicines=add_medicines, sell_medicines=sell_medicines, total_balance=total_balance)
+
+@app.route('/add_medicine', methods=['POST'])
+def add_medicine_form():
     if request.method == 'POST':
-        description = request.form['description']
-        amount = request.form['amount']
+        name = request.form['name']
+        type = request.form['type']
+        piece = int(request.form['piece'])
+        price = float(request.form['price'])
         date_str = request.form['date']
 
-        # Convert the date string to a Python date object
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+        date = datetime.strptime(date_str, '%Y-%m-%d')
 
-        new_outcome = Outcome(description=description, amount=amount, date=date_obj)
-        db.session.add(new_outcome)
+        new_medicine = AddMedicine(name=name, type=type, piece=piece, price=price, date=date)
+        db.session.add(new_medicine)
+        db.session.commit()
+
+        return redirect(url_for('index'))
+
+@app.route('/sell_medicine', methods=['POST'])
+def sell_medicine_form():
+    if request.method == 'POST':
+        name = request.form['name']
+        piece = int(request.form['piece'])
+        price = float(request.form['price'])
+        date_str = request.form['date']
+
+        date = datetime.strptime(date_str, '%Y-%m-%d')
+
+        add_medicine = AddMedicine.query.filter_by(name=name).first()
+
+        if add_medicine and add_medicine.piece >= piece:
+            sold_medicine = SellMedicine(name=name, piece=piece, price=price, date=date)
+            db.session.add(sold_medicine)
+
+            add_medicine.piece -= piece
+
+            if add_medicine.piece == 0:
+                db.session.delete(add_medicine)
+
+            db.session.commit()
+
+        return redirect(url_for('index'))
+
+@app.route('/delete_medicine/<string:table>/<int:id>', methods=['GET', 'POST'])
+def delete_medicine(table, id):
+    if table == 'add':
+        medicine = AddMedicine.query.get(id)
+    elif table == 'sell':
+        medicine = SellMedicine.query.get(id)
+
+    if medicine:
+        db.session.delete(medicine)
         db.session.commit()
 
     return redirect(url_for('index'))
 
-@app.route('/delete/<int:id>')
-def delete_outcome(id):
-    outcome_to_delete = Outcome.query.get(id)
-    db.session.delete(outcome_to_delete)
-    db.session.commit()
-
-    return redirect(url_for('index'))
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)

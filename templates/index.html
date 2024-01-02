@@ -40,13 +40,16 @@
                     <option value="{{ medicine.name }}">{{ medicine.name }}</option>
                 {% endfor %}
             </select>
-
+    
             <label for="piece">Piece:</label>
             <input type="number" name="piece" required>
-
+    
+            <label for="sell_price">Sell Price:</label>  <!-- Added sell_price field -->
+            <input type="number" name="sell_price" step="0.01" required>
+    
             <label for="date">Date:</label>
             <input type="date" name="date" required>
-
+    
             <button type="submit">Sell Medicine</button>
         </form>
     </div>
@@ -77,27 +80,29 @@
         </tbody>
     </table>
 
-    <h2>Sell Medicine Table</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Piece</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for medicine in sell_medicines %}
-            <tr>
-                <td>{{ medicine.name }}</td>
-                <td>{{ medicine.piece }}</td>
-                <td>{{ medicine.date.strftime('%Y-%m-%d') }}</td>
-                <td><a href="{{ url_for('delete_sell_medicine', table='sell', id=medicine.id) }}">Delete</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<h2>Sell Medicine Table</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Piece</th>
+            <th>Sell Price</th>  <!-- Added column for selling price -->
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for medicine in sell_medicines %}
+        <tr>
+            <td>{{ medicine.name }}</td>
+            <td>{{ medicine.piece }}</td>
+            <td>{{ medicine.sell_price }}</td>  <!-- Displaying selling price -->
+            <td>{{ medicine.date.strftime('%Y-%m-%d') }}</td>
+            <td><a href="{{ url_for('delete_sell_medicine', table='sell', id=medicine.id) }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 </body>
 </html>

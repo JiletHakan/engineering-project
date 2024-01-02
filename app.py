@@ -18,6 +18,7 @@ class SellMedicine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     piece = db.Column(db.Integer, nullable=False)
+    sell_price = db.Column(db.Float, nullable=False)  # Added column for selling price
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 @app.route('/')
@@ -48,6 +49,7 @@ def sell_medicine_form():
     if request.method == 'POST':
         name = request.form['name']
         piece = int(request.form['piece'])
+        sell_price = float(request.form['sell_price'])  # Added sell_price from the form
         date_str = request.form['date']
 
         date = datetime.strptime(date_str, '%Y-%m-%d')
@@ -55,7 +57,7 @@ def sell_medicine_form():
         add_medicine = AddMedicine.query.filter_by(name=name).first()
 
         if add_medicine and add_medicine.piece >= piece:
-            sold_medicine = SellMedicine(name=name, piece=piece, date=date)
+            sold_medicine = SellMedicine(name=name, piece=piece, sell_price=sell_price, date=date)  # Added sell_price
             db.session.add(sold_medicine)
 
             add_medicine.piece -= piece

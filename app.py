@@ -18,21 +18,13 @@ class SellMedicine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     piece = db.Column(db.Integer, nullable=False)
-    price = db.Column(db.Float, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 @app.route('/')
 def index():
     add_medicines = AddMedicine.query.all()
     sell_medicines = SellMedicine.query.all()
-
-    # Calculate total prices
-    total_add_medicine_price = sum(medicine.price for medicine in add_medicines)
-    total_sell_medicine_price = sum(medicine.price for medicine in sell_medicines)
-
-    total_balance = total_sell_medicine_price - total_add_medicine_price
-
-    return render_template('index.html', add_medicines=add_medicines, sell_medicines=sell_medicines, total_balance=total_balance)
+    return render_template('index.html', add_medicines=add_medicines, sell_medicines=sell_medicines)
 
 @app.route('/add_medicine', methods=['POST'])
 def add_medicine_form():
@@ -56,7 +48,6 @@ def sell_medicine_form():
     if request.method == 'POST':
         name = request.form['name']
         piece = int(request.form['piece'])
-        price = float(request.form['price'])
         date_str = request.form['date']
 
         date = datetime.strptime(date_str, '%Y-%m-%d')
@@ -64,7 +55,7 @@ def sell_medicine_form():
         add_medicine = AddMedicine.query.filter_by(name=name).first()
 
         if add_medicine and add_medicine.piece >= piece:
-            sold_medicine = SellMedicine(name=name, piece=piece, price=price, date=date)
+            sold_medicine = SellMedicine(name=name, piece=piece, date=date)
             db.session.add(sold_medicine)
 
             add_medicine.piece -= piece
@@ -76,17 +67,22 @@ def sell_medicine_form():
 
         return redirect(url_for('index'))
 
-@app.route('/delete_medicine/<string:table>/<int:id>', methods=['GET', 'POST'])
-def delete_medicine(table, id):
+@app.route('/delete_add_medicine/<string:table>/<int:id>', methods=['GET', 'POST'])
+def delete_add_medicine(table, id):
     if table == 'add':
         medicine = AddMedicine.query.get(id)
-    elif table == 'sell':
+        if medicine:
+            db.session.delete(medicine)
+            db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/delete_sell_medicine/<string:table>/<int:id>', methods=['GET', 'POST'])
+def delete_sell_medicine(table, id):
+    if table == 'sell':
         medicine = SellMedicine.query.get(id)
-
-    if medicine:
-        db.session.delete(medicine)
-        db.session.commit()
-
+        if medicine:
+            db.session.delete(medicine)
+            db.session.commit()
     return redirect(url_for('index'))
 
 if __name__ == "__main__":

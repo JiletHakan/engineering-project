@@ -44,9 +44,6 @@
             <label for="piece">Piece:</label>
             <input type="number" name="piece" required>
 
-            <label for="price">Price:</label>
-            <input type="number" name="price" step="0.01" required>
-
             <label for="date">Date:</label>
             <input type="date" name="date" required>
 
@@ -85,9 +82,7 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Type</th>
                 <th>Piece</th>
-                <th>Sell Price</th>
                 <th>Date</th>
                 <th>Action</th>
             </tr>
@@ -96,18 +91,13 @@
             {% for medicine in sell_medicines %}
             <tr>
                 <td>{{ medicine.name }}</td>
-                <td>{{ medicine.name }}</td>
                 <td>{{ medicine.piece }}</td>
-                <td>{{ medicine.price }}</td>
                 <td>{{ medicine.date.strftime('%Y-%m-%d') }}</td>
                 <td><a href="{{ url_for('delete_sell_medicine', table='sell', id=medicine.id) }}">Delete</a></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-
-    <h2>Total Balance</h2>
-    <p>{{ total_balance }}</p>
 
 </body>
 </html>
